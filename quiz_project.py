@@ -509,4 +509,7 @@ def main():
             add_question_topic = input("Выберите: ")
         elif mode.isdigit() and len(mode) == 1 and 1 <= int(mode) <= 4 and mode == "4":
             print("До скорой встречи")
+            break
+        else:
+            print("Упс что-то не то. Попробуйте заново и будте внимательно")
 main()
