@@ -31,6 +31,7 @@ def choose_level():
 def play(topic, level, questions):
     correct = []
     incorrect = []
+    analysis = []
     for question in questions:
         if question["topic"] == topic and question["difficulty"] == level:
             print(f'\n{question["id"]}. {question["question"]}')
@@ -46,10 +47,12 @@ def play(topic, level, questions):
                     print("Ваш ответ верно!")
                 else:
                     incorrect.append(question["id"])
+                    analysis.append({"question" : question["question"], "user_answer" : question["options"][int(choice) - 1], 
+                                     "correct_answer": question["options"][question["answer"] - 1]})
                     print("Упс, ваш ответ неправильно!")
                     print(f"Правильный ответ: {question["answer"]}. {question["options"][(question["answer"]) - 1]}")
                 break
-    return correct, incorrect
+    return correct, incorrect, analysis
 def main():
     questions = [
     {
@@ -499,11 +502,25 @@ def main():
             player = input("Напишите свое имя: ")
             player_choice_topic = choose_topic()
             player_choice_level = choose_level()
-            correct_answers, incorrect_answers = play(player_choice_topic, player_choice_level, questions)
+            correct_answers, incorrect_answers, analysis = play(player_choice_topic, player_choice_level, questions)
             print("\nПравильные ответы:", len(correct_answers))
             print("Номера вопросов:", ", ".join(str(n) for n in correct_answers))
             print("Неправильные ответы:", len(incorrect_answers))
-            print("Номера вопросов:", ", ".join(str(n) for n in incorrect_answers),"\n")
+            print("Номера вопросов:", ", ".join(str(n) for n in incorrect_answers))
+            if analysis:
+                while True:
+                    to_analysis = input("Хотите разбор по ошибкам (да) или (нет)").strip()
+                    if to_analysis.lower() == "да":
+                            for mistake in analysis:
+                                print(f'\nВопрос: {mistake["question"]}')
+                                print(f'Ваш ответ: {mistake["user_answer"]}')
+                                print(f'Правильный ответ: {mistake["correct_answer"]}')
+                            break
+                    elif to_analysis.lower() == "нет":
+                        print("Хорошо, как хотите\n")
+                        break
+                    else:
+                        print("Хмм я не мог понять ваш ответ")
             table_of_result[player] = f"{len(correct_answers)}/5"
             if player_choice_level == "Лёгкий":
                 table_of_result[player] = f"{len(correct_answers)}/5"
