@@ -36,11 +36,19 @@ def play(topic, level, questions):
             print(f'\n{question["id"]}. {question["question"]}')
             for number, option in enumerate(question["options"], start=1):
                 print(f"{number}. {option}")
-            choice = input("Ваш ответ: ")
-            if question["answer"] == int(choice):
-                correct.append(question["id"])
-            else:
-                incorrect.append(question["id"])
+            while True:
+                choice = input("Ваш ответ: ").strip()
+                if choice not in ("1", "2", "3", "4"):
+                    print("Введите только цифры (1–4)")
+                    continue
+                if question["answer"] == int(choice):
+                    correct.append(question["id"])
+                    print("Ваш ответ верно!")
+                else:
+                    incorrect.append(question["id"])
+                    print("Упс, ваш ответ неправильно!")
+                    print(f"Правильный ответ: {question["answer"]}. {question["options"][(question["answer"]) - 1]}")
+                break
     return correct, incorrect
 def main():
     questions = [
@@ -501,7 +509,7 @@ def main():
                 table_of_result[player] = f"{len(correct_answers)}/5"
             elif player_choice_level == "Средний":
                 table_of_result[player] = f"{len(correct_answers)*2}/10"
-            elif player_choice_level == "Средний":
+            elif player_choice_level == "Сложный":
                 table_of_result[player] = f"{len(correct_answers)*3}/15"
         elif mode.isdigit() and len(mode) == 1 and 1 <= int(mode) <= 4 and mode == "2":
             if not table_of_result:
