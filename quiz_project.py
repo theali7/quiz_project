@@ -497,6 +497,12 @@ def main():
             print("Неправильные ответы:", len(incorrect_answers))
             print("Номера вопросов:", ", ".join(str(n) for n in incorrect_answers),"\n")
             table_of_result[player] = f"{len(correct_answers)}/5"
+            if player_choice_level == "Лёгкий":
+                table_of_result[player] = f"{len(correct_answers)}/5"
+            elif player_choice_level == "Средний":
+                table_of_result[player] = f"{len(correct_answers)*2}/10"
+            elif player_choice_level == "Средний":
+                table_of_result[player] = f"{len(correct_answers)*3}/15"
         elif mode.isdigit() and len(mode) == 1 and 1 <= int(mode) <= 4 and mode == "2":
             if not table_of_result:
                 print("Упс таблица еще пусто")
