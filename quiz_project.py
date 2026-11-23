@@ -500,10 +500,21 @@ def main():
         mode = input("Выберите: ")
         if mode.isdigit() and len(mode) == 1 and 1 <= int(mode) <= 4 and mode == "1":
             while True:
-                player = input("Напишите свое имя: ").strip()
+                player = input("Напишите свой никнейм: ").strip()
                 if not player:
-                    print("Запишите свой никнейм: ")
-                else:
+                    print("Никнейм не должен быть пустым")
+                    continue
+                if player not in table_of_result:
+                    break
+                while True:
+                    print("Этот никнейм уже используется")
+                    print("1 - Я тот же игрок, хочу сыграть ещё раз")
+                    print("2 - Я другой человек, выберу другой ник")
+                    same_player = input("Выберите вариант (1–2): ").strip()
+                    if same_player in ("1", "2"):
+                        break
+                    print("Введите 1 или 2")
+                if same_player == "1":
                     break
             player_choice_topic = choose_topic()
             player_choice_level = choose_level()
