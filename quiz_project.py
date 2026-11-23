@@ -499,7 +499,12 @@ def main():
         "4 - Выйти из программы")
         mode = input("Выберите: ")
         if mode.isdigit() and len(mode) == 1 and 1 <= int(mode) <= 4 and mode == "1":
-            player = input("Напишите свое имя: ")
+            while True:
+                player = input("Напишите свое имя: ").strip()
+                if not player:
+                    print("Запишите свой никнейм: ")
+                else:
+                    break
             player_choice_topic = choose_topic()
             player_choice_level = choose_level()
             correct_answers, incorrect_answers, analysis = play(player_choice_topic, player_choice_level, questions)
@@ -521,7 +526,6 @@ def main():
                         break
                     else:
                         print("Хмм я не мог понять ваш ответ")
-            table_of_result[player] = f"{len(correct_answers)}/5"
             if player_choice_level == "Лёгкий":
                 table_of_result[player] = f"{len(correct_answers)}/5"
             elif player_choice_level == "Средний":
