@@ -538,17 +538,27 @@ def main():
                     else:
                         print("Хмм я не мог понять ваш ответ")
             if player_choice_level == "Лёгкий":
-                table_of_result[player] = f"{len(correct_answers)}/5"
+                score = len(correct_answers)
+                max_score = 5
             elif player_choice_level == "Средний":
-                table_of_result[player] = f"{len(correct_answers)*2}/10"
+                score = len(correct_answers) * 2
+                max_score = 10
             elif player_choice_level == "Сложный":
-                table_of_result[player] = f"{len(correct_answers)*3}/15"
+                score = len(correct_answers) * 3
+                max_score = 15
+            table_of_result[player] = {
+                "topic": player_choice_topic,
+                "difficulty": player_choice_level,
+                "score": score,
+                "max_score": max_score
+            }
         elif mode.isdigit() and len(mode) == 1 and 1 <= int(mode) <= 4 and mode == "2":
             if not table_of_result:
-                print("Упс таблица еще пусто")
+                print("Таблица результатов пока пустая")
             else:
                 for name, result in table_of_result.items():
-                    print(f"{name} - {result}\n")
+                    print(f'\n{name}:')
+                    print(f'{result["topic"]} — {result["difficulty"]} — {result["score"]}/{result["max_score"]}')
         elif mode.isdigit() and len(mode) == 1 and 1 <= int(mode) <= 4 and mode == "3":
             print("1 - Добавить вопрос на существующую тему\n" \
             "2 - Добавить новую тему")
