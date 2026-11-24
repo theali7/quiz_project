@@ -1,18 +1,57 @@
-def choose_topic():
-    print("\nВыберите тему: \n")
-    print("1. Python\n" \
-    "2. Java\n" \
-    "3. C++")
+def add_question(questions):
+    topic = choose_topic(questions)
+    level = choose_level()
     while True:
-        topic_choice = input("Выберите по номеру: ")
-        if topic_choice.isdigit() and topic_choice == "1" and len(topic_choice) == 1:
-            return "Python"
-        elif topic_choice.isdigit() and topic_choice == "2" and len(topic_choice) == 1:
-            return "Java"
-        elif topic_choice.isdigit() and topic_choice == "3" and len(topic_choice) == 1:
-            return "C++"
-        else:
-            print("Что-то не так. Выберите тему по номеру")
+        text = input("Напишите свой вопрос: ").strip()
+        if text:
+            break
+        print("Вопрос не должен быть пустым")
+    options = []
+    for i in range(1, 5):
+        while True:
+            variant = input(f"{i}-й вариант: ").strip()
+            if variant:
+                options.append(variant)
+                break
+            print("Вариант не должен быть пустым")
+    while True:
+        answer = input("Номер правильного ответа (1–4): ").strip()
+        if answer in ("1", "2", "3", "4"):
+            answer = int(answer)
+            break
+        print("Введите число от 1 до 4")
+    max_id = 0
+    for question in questions:
+        if question["topic"] == topic and question["difficulty"] == level:
+            if question["id"] > max_id:
+                max_id = question["id"]
+    questions.append({
+        "id": max_id + 1,
+        "topic": topic,
+        "difficulty": level,
+        "question": text,
+        "options": options,
+        "answer": answer
+    })
+    print("Вопрос добавлен!")
+def choose_topic(questions):
+    topics = set()
+    for question in questions:
+        topics.add(question["topic"])
+    topics = sorted(topics)
+    if not topics:
+        print("Тем пока нет")
+        return None
+    print("\nВыберите тему:")
+    for number, topic in enumerate(topics, start=1):
+        print(f"{number} - {topic}")
+    while True:
+        choice = input("Введите номер темы: ").strip()
+        if choice.isdecimal():
+            number = int(choice)
+            if 1 <= number <= len(topics):
+                return topics[number - 1]
+        print("Введите номер темы из списка")
 def choose_level():
     print("Выберите уровень: ")
     print("1. Легкий\n" \
@@ -516,7 +555,7 @@ def main():
                     print("Введите 1 или 2")
                 if same_player == "1":
                     break
-            player_choice_topic = choose_topic()
+            player_choice_topic = choose_topic(questions)
             player_choice_level = choose_level()
             correct_answers, incorrect_answers, analysis = play(player_choice_topic, player_choice_level, questions)
             print("\nПравильные ответы:", len(correct_answers))
@@ -560,9 +599,7 @@ def main():
                     print(f'\n{name}:')
                     print(f'{result["topic"]} — {result["difficulty"]} — {result["score"]}/{result["max_score"]}')
         elif mode.isdigit() and len(mode) == 1 and 1 <= int(mode) <= 4 and mode == "3":
-            print("1 - Добавить вопрос на существующую тему\n" \
-            "2 - Добавить новую тему")
-            add_question_topic = input("Выберите: ")
+            add_question(questions)
         elif mode.isdigit() and len(mode) == 1 and 1 <= int(mode) <= 4 and mode == "4":
             print("До скорой встречи")
             break
