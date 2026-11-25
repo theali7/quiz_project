@@ -1,19 +1,140 @@
-def add_question(questions):
-    topic = choose_topic(questions)
-    level = choose_level()
+def choose_topic(questions):
+    topics = sorted({question["topic"] for question in questions})
+    if not topics:
+        print("Тем пока нет")
+        return None
+    print("\nВыберите тему:")
+    for number, topic in enumerate(topics, start=1):
+        print(f"{number} - {topic}")
     while True:
-        text = input("Напишите свой вопрос: ").strip()
+        choice = input("Номер темы: ").strip()
+        if choice.isdecimal():
+            number = int(choice)
+            if 1 <= number <= len(topics):
+                return topics[number - 1]
+        print("Введите номер темы из списка")
+def choose_level():
+    levels = ["Лёгкий", "Средний", "Сложный"]
+    print("\nВыберите сложность:")
+    for number, level in enumerate(levels, start=1):
+        print(f"{number} - {level}")
+    while True:
+        choice = input("Номер сложности: ").strip()
+        if choice in ("1", "2", "3"):
+            return levels[int(choice) - 1]
+        print("Введите 1, 2 или 3")
+def input_not_empty(prompt):
+    while True:
+        text = input(prompt).strip()
         if text:
-            break
-        print("Вопрос не должен быть пустым")
-    options = []
-    for i in range(1, 5):
+            return text
+        print("Поле не должно быть пустым")
+def choose_player(table_of_result):
+    while True:
+        player = input_not_empty("\nНапишите свой никнейм: ")
+        if player not in table_of_result:
+            return player
+        print("Этот никнейм уже используется")
+        print("1 - Я тот же игрок, хочу сыграть ещё раз")
+        print("2 - Я другой человек, выберу другой ник")
         while True:
-            variant = input(f"{i}-й вариант: ").strip()
-            if variant:
-                options.append(variant)
+            choice = input("Выберите 1 или 2: ").strip()
+            if choice in ("1", "2"):
                 break
-            print("Вариант не должен быть пустым")
+            print("Введите 1 или 2")
+        if choice == "1":
+            return player
+def play(topic, level, questions):
+    correct = []
+    incorrect = []
+    analysis = []
+    selected_questions = []
+    for question in questions:
+        if question["topic"] == topic and question["difficulty"] == level:
+            selected_questions.append(question)
+    for number, question in enumerate(selected_questions, start=1):
+        print(f'\nВопрос {number} из {len(selected_questions)}')
+        print(question["question"])
+        for option_number, option in enumerate(question["options"], start=1):
+            print(f"{option_number} - {option}")
+        while True:
+            choice = input("Ваш ответ: ").strip()
+            if choice in ("1", "2", "3", "4"):
+                choice = int(choice)
+                break
+            print("Введите только цифры от 1 до 4")
+        if choice == question["answer"]:
+            correct.append(question["id"])
+            print("Ваш ответ верный!")
+        else:
+            incorrect.append(question["id"])
+            correct_text = question["options"][question["answer"] - 1]
+            analysis.append({
+                "question": question["question"],
+                "user_answer": question["options"][choice - 1],
+                "correct_answer": correct_text
+            })
+            print("Ваш ответ неправильный!")
+            print(f"Правильный ответ: {correct_text}")
+    return correct, incorrect, analysis
+def show_analysis(analysis):
+    if not analysis:
+        print("Ошибок нет!")
+        return
+    while True:
+        choice = input("\nХотите разбор ошибок? (да/нет): ").strip().lower()
+        if choice == "да":
+            print("\nРазбор ошибок:")
+            for mistake in analysis:
+                print(f'\nВопрос: {mistake["question"]}')
+                print(f'Ваш ответ: {mistake["user_answer"]}')
+                print(f'Правильный ответ: {mistake["correct_answer"]}')
+            return
+        if choice == "нет":
+            return
+        print("Введите да или нет")
+def show_results(table_of_result):
+    if not table_of_result:
+        print("\nТаблица результатов пока пустая")
+        return
+    print("\nТаблица результатов:")
+    for name, result in table_of_result.items():
+        print(f"\n{name}:")
+        print(
+            f'{result["topic"]} — {result["difficulty"]} — '
+            f'{result["score"]}/{result["max_score"]}'
+        )
+def add_question(questions):
+    print("\n1 - Добавить вопрос на существующую тему")
+    print("2 - Добавить новую тему и вопрос")
+    print("0 - Назад")
+    while True:
+        choice = input("Выберите: ").strip()
+        if choice in ("0", "1", "2"):
+            break
+        print("Введите 0, 1 или 2")
+    if choice == "0":
+        return
+    if choice == "1":
+        topic = choose_topic(questions)
+        if topic is None:
+            return
+    else:
+        existing_topics = {
+            question["topic"].casefold()
+            for question in questions
+        }
+        while True:
+            topic = input_not_empty("Название новой темы: ")
+            if topic.casefold() not in existing_topics:
+                break
+            print("Такая тема уже существует. Введите другое название")
+    level = choose_level()
+    text = input_not_empty("Напишите вопрос: ")
+    options = []
+    for number in range(1, 5):
+        variant = input_not_empty(f"{number}-й вариант ответа: ")
+        options.append(variant)
     while True:
         answer = input("Номер правильного ответа (1–4): ").strip()
         if answer in ("1", "2", "3", "4"):
@@ -33,576 +154,510 @@ def add_question(questions):
         "options": options,
         "answer": answer
     })
-    print("Вопрос добавлен!")
-def choose_topic(questions):
-    topics = set()
-    for question in questions:
-        topics.add(question["topic"])
-    topics = sorted(topics)
-    if not topics:
-        print("Тем пока нет")
-        return None
-    print("\nВыберите тему:")
-    for number, topic in enumerate(topics, start=1):
-        print(f"{number} - {topic}")
-    while True:
-        choice = input("Введите номер темы: ").strip()
-        if choice.isdecimal():
-            number = int(choice)
-            if 1 <= number <= len(topics):
-                return topics[number - 1]
-        print("Введите номер темы из списка")
-def choose_level():
-    print("Выберите уровень: ")
-    print("1. Легкий\n" \
-        "2. Средний\n" \
-        "3. Сложный")
-    while True:
-        level_choice = input("Выберите уровень: ")
-        if level_choice.isdigit() and level_choice == "1" and len(level_choice) == 1:
-            return "Лёгкий"
-        elif level_choice.isdigit() and level_choice == "2" and len(level_choice) == 1:
-            return "Средний"
-        elif level_choice.isdigit() and level_choice == "3" and len(level_choice) == 1:
-            return "Сложный"
-        else:
-            print("Что-то не так. Выберите тему по номеру")
-def play(topic, level, questions):
-    correct = []
-    incorrect = []
-    analysis = []
-    for question in questions:
-        if question["topic"] == topic and question["difficulty"] == level:
-            print(f'\n{question["id"]}. {question["question"]}')
-            for number, option in enumerate(question["options"], start=1):
-                print(f"{number}. {option}")
-            while True:
-                choice = input("Ваш ответ: ").strip()
-                if choice not in ("1", "2", "3", "4"):
-                    print("Введите только цифры (1–4)")
-                    continue
-                if question["answer"] == int(choice):
-                    correct.append(question["id"])
-                    print("Ваш ответ верно!")
-                else:
-                    incorrect.append(question["id"])
-                    analysis.append({"question" : question["question"], "user_answer" : question["options"][int(choice) - 1], 
-                                     "correct_answer": question["options"][question["answer"] - 1]})
-                    print("Упс, ваш ответ неправильно!")
-                    print(f"Правильный ответ: {question["answer"]}. {question["options"][(question["answer"]) - 1]}")
-                break
-    return correct, incorrect, analysis
-def main():
-    questions = [
-    {
-        "id": 1,
-        "topic": "Python",
-        "difficulty": "Лёгкий",
-        "question": "Какой тип данных возвращает input()?",
-        "options": ["int", "str", "float", "bool"],
-        "answer": 2
-    },
-    {
-        "id": 2,
-        "topic": "Python",
-        "difficulty": "Лёгкий",
-        "question": "Что выведет код?\nprint(2 + 3 * 2)",
-        "options": ["10", "12", "8", "7"],
-        "answer": 3
-    },
-    {
-        "id": 3,
-        "topic": "Python",
-        "difficulty": "Лёгкий",
-        "question": "Какая коллекция хранит пары «ключ — значение»?",
-        "options": ["list", "tuple", "set", "dict"],
-        "answer": 4
-    },
-    {
-        "id": 4,
-        "topic": "Python",
-        "difficulty": "Лёгкий",
-        "question": "Что выведет код?\nnumbers = [10, 20, 30]\nprint(numbers[1])",
-        "options": ["10", "20", "30", "1"],
-        "answer": 2
-    },
-    {
-        "id": 5,
-        "topic": "Python",
-        "difficulty": "Лёгкий",
-        "question": "Сколько раз выполнится print()?\nfor i in range(3):\n    print(i)",
-        "options": ["3 раза", "2 раза", "4 раза", "1 раз"],
-        "answer": 1
-    },
-    {
-        "id": 1,
-        "topic": "Python",
-        "difficulty": "Средний",
-        "question": "Что выведет код?\nnumbers = [1, 2, 3, 4, 5]\nprint(numbers[1:4])",
-        "options": [
-            "[1, 2, 3, 4]",
-            "[2, 3, 4]",
-            "[2, 3, 4, 5]",
-            "[1, 2, 3]"
-        ],
-        "answer": 2
-    },
-    {
-        "id": 2,
-        "topic": "Python",
-        "difficulty": "Средний",
-        "question": "Что произойдёт при обращении к отсутствующему ключу обычного словаря через data[key]?",
-        "options": [
-            "Вернётся None",
-            "Создастся новый ключ",
-            "Возникнет ошибка KeyError",
-            "Вернётся False"
-        ],
-        "answer": 3
-    },
-    {
-        "id": 3,
-        "topic": "Python",
-        "difficulty": "Средний",
-        "question": "Что выведет код?\ndef add_item(items):\n    items.append(3)\nnumbers = [1, 2]\nadd_item(numbers)\nprint(numbers)",
-        "options": ["[1, 2]", "[3]", "None", "[1, 2, 3]"],
-        "answer": 4
-    },
-    {
-        "id": 4,
-        "topic": "Python",
-        "difficulty": "Средний",
-        "question": "Чем return отличается от print() внутри функции?",
-        "options": [
-            "return возвращает значение и завершает текущий вызов функции, а print() выводит данные",
-            "print() завершает функцию, а return только выводит данные",
-            "Они всегда выполняют одно и то же действие",
-            "return можно использовать только для чисел"
-        ],
-        "answer": 1
-    },
-    {
-        "id": 5,
-        "topic": "Python",
-        "difficulty": "Средний",
-        "question": "Что выведет код?\ntotal = 0\nfor number in range(1, 6):\n    if number % 2 == 0:\n        continue\n    total += number\nprint(total)",
-        "options": ["15", "6", "9", "5"],
-        "answer": 3
-    },
-    {
-        "id": 1,
-        "topic": "Python",
-        "difficulty": "Сложный",
-        "question": "Что выведет код?\na = [[1, 2], [3, 4]]\nb = a.copy()\nb[0].append(5)\nprint(a[0])",
-        "options": [
-            "[1, 2]",
-            "[1, 2, 5]",
-            "[3, 4, 5]",
-            "Возникнет ошибка"
-        ],
-        "answer": 2
-    },
-    {
-        "id": 2,
-        "topic": "Python",
-        "difficulty": "Сложный",
-        "question": "Что выведет код?\ndef add(value, items=[]):\n    items.append(value)\n    return items\nadd(1)\nprint(add(2))",
-        "options": ["[2]", "[1]", "[1, 2]", "[]"],
-        "answer": 3
-    },
-    {
-        "id": 3,
-        "topic": "Python",
-        "difficulty": "Сложный",
-        "question": "Почему список нельзя использовать как ключ словаря?",
-        "options": [
-            "Список может хранить только числа",
-            "Ключами могут быть только строки",
-            "Список не поддерживает индексы",
-            "Список является нехешируемым типом"
-        ],
-        "answer": 4
-    },
-    {
-        "id": 4,
-        "topic": "Python",
-        "difficulty": "Сложный",
-        "question": "Что выведет код?\ndef calculate(n):\n    if n <= 1:\n        return 1\n    return n * calculate(n - 2)\nprint(calculate(5))",
-        "options": ["15", "120", "10", "5"],
-        "answer": 1
-    },
-    {
-        "id": 5,
-        "topic": "Python",
-        "difficulty": "Сложный",
-        "question": "Что произойдёт при вызове функции?\nx = 10\ndef change():\n    x = x + 1\n    return x\nprint(change())",
-        "options": [
-            "Выведется 11",
-            "Выведется 10",
-            "Возникнет ошибка UnboundLocalError",
-            "Выведется None"
-        ],
-        "answer": 3
-    },
-    {
-        "id": 1,
-        "topic": "Java",
-        "difficulty": "Лёгкий",
-        "question": "Какой примитивный тип используется для значений true и false?",
-        "options": ["int", "String", "boolean", "char"],
-        "answer": 3
-    },
-    {
-        "id": 2,
-        "topic": "Java",
-        "difficulty": "Лёгкий",
-        "question": "Что выведет код?\nSystem.out.println(2 + 3 * 2);",
-        "options": ["10", "8", "12", "7"],
-        "answer": 2
-    },
-    {
-        "id": 3,
-        "topic": "Java",
-        "difficulty": "Лёгкий",
-        "question": "С какого индекса начинается нумерация элементов массива?",
-        "options": ["0", "1", "-1", "Зависит от длины массива"],
-        "answer": 1
-    },
-    {
-        "id": 4,
-        "topic": "Java",
-        "difficulty": "Лёгкий",
-        "question": "Что выведет код?\nint[] numbers = {10, 20, 30};\nSystem.out.println(numbers[2]);",
-        "options": ["10", "20", "2", "30"],
-        "answer": 4
-    },
-    {
-        "id": 5,
-        "topic": "Java",
-        "difficulty": "Лёгкий",
-        "question": "Сколько раз выполнится println()?\nfor (int i = 0; i < 4; i++) {\n    System.out.println(i);\n}",
-        "options": ["3 раза", "4 раза", "5 раз", "1 раз"],
-        "answer": 2
-    },
-    {
-        "id": 1,
-        "topic": "Java",
-        "difficulty": "Средний",
-        "question": "Что выведет код?\nint a = 7;\nint b = 2;\nSystem.out.println(a / b);",
-        "options": ["3.5", "4", "3", "Возникнет ошибка"],
-        "answer": 3
-    },
-    {
-        "id": 2,
-        "topic": "Java",
-        "difficulty": "Средний",
-        "question": "Как сравнить содержимое двух строк String, если обе ссылки не равны null?",
-        "options": [
-            "Использовать метод equals()",
-            "Всегда использовать ==",
-            "Использовать оператор in",
-            "Сравнить только длины строк"
-        ],
-        "answer": 1
-    },
-    {
-        "id": 3,
-        "topic": "Java",
-        "difficulty": "Средний",
-        "question": "Что выведет код?\nint[] a = {1, 2, 3};\nint[] b = a;\nb[0] = 9;\nSystem.out.println(a[0]);",
-        "options": ["1", "0", "3", "9"],
-        "answer": 4
-    },
-    {
-        "id": 4,
-        "topic": "Java",
-        "difficulty": "Средний",
-        "question": "Что означает перегрузка методов (method overloading)?",
-        "options": [
-            "Повторный вызов одного метода",
-            "Методы с одинаковым именем, но разными списками параметров",
-            "Методы, отличающиеся только возвращаемым типом",
-            "Удаление метода родительского класса"
-        ],
-        "answer": 2
-    },
-    {
-        "id": 5,
-        "topic": "Java",
-        "difficulty": "Средний",
-        "question": "Что выведет код?\nint total = 0;\nfor (int i = 1; i <= 5; i++) {\n    if (i % 2 == 0) {\n        continue;\n    }\n    total += i;\n}\nSystem.out.println(total);",
-        "options": ["15", "6", "9", "5"],
-        "answer": 3
-    },
-    {
-        "id": 1,
-        "topic": "Java",
-        "difficulty": "Сложный",
-        "question": "Что выведет код?\nString a = new String(\"Java\");\nString b = new String(\"Java\");\nSystem.out.println(a == b);\nSystem.out.println(a.equals(b));",
-        "options": [
-            "true, затем true",
-            "false, затем true",
-            "false, затем false",
-            "true, затем false"
-        ],
-        "answer": 2
-    },
-    {
-        "id": 2,
-        "topic": "Java",
-        "difficulty": "Сложный",
-        "question": "Что выведет программа?\nclass Main {\n    static void change(int[] values) {\n        values[0] = 9;\n        values = new int[]{7, 8};\n    }\n    public static void main(String[] args) {\n        int[] numbers = {1, 2};\n        change(numbers);\n        System.out.println(numbers[0]);\n    }\n}",
-        "options": ["1", "7", "9", "Возникнет ошибка"],
-        "answer": 3
-    },
-    {
-        "id": 3,
-        "topic": "Java",
-        "difficulty": "Сложный",
-        "question": "Что выведет программа?\nclass Main {\n    static int calculate() {\n        try {\n            return 1;\n        } finally {\n            return 2;\n        }\n    }\n    public static void main(String[] args) {\n        System.out.println(calculate());\n    }\n}",
-        "options": [
-            "2",
-            "1",
-            "Сначала 1, затем 2",
-            "Возникнет ошибка компиляции"
-        ],
-        "answer": 1
-    },
-    {
-        "id": 4,
-        "topic": "Java",
-        "difficulty": "Сложный",
-        "question": "Что выведет программа?\nclass Animal {\n    String sound() {\n        return \"Animal\";\n    }\n}\nclass Dog extends Animal {\n    @Override\n    String sound() {\n        return \"Dog\";\n    }\n}\nclass Main {\n    public static void main(String[] args) {\n        Animal animal = new Dog();\n        System.out.println(animal.sound());\n    }\n}",
-        "options": [
-            "Animal",
-            "Animal Dog",
-            "Возникнет ошибка компиляции",
-            "Dog"
-        ],
-        "answer": 4
-    },
-    {
-        "id": 5,
-        "topic": "Java",
-        "difficulty": "Сложный",
-        "question": "Какое правило обязательно соблюдать при переопределении equals() и hashCode()?",
-        "options": [
-            "Разные объекты всегда должны иметь разные хеш-коды",
-            "Если объекты равны по equals(), их hashCode() должен совпадать",
-            "Одинаковый hashCode() всегда означает равенство по equals()",
-            "Метод equals() должен возвращать int"
-        ],
-        "answer": 2
-    },
-    {
-        "id": 1,
-        "topic": "C++",
-        "difficulty": "Лёгкий",
-        "question": "Какой тип используется для значений true и false?",
-        "options": ["int", "bool", "char", "double"],
-        "answer": 2
-    },
-    {
-        "id": 2,
-        "topic": "C++",
-        "difficulty": "Лёгкий",
-        "question": "Что выведет код?\nstd::cout << 2 + 3 * 2;",
-        "options": ["10", "12", "8", "7"],
-        "answer": 3
-    },
-    {
-        "id": 3,
-        "topic": "C++",
-        "difficulty": "Лёгкий",
-        "question": "Какой заголовок нужно подключить для использования std::cout?",
-        "options": ["<iostream>", "<string>", "<vector>", "<cmath>"],
-        "answer": 1
-    },
-    {
-        "id": 4,
-        "topic": "C++",
-        "difficulty": "Лёгкий",
-        "question": "Что выведет код?\nint numbers[] = {10, 20, 30};\nstd::cout << numbers[1];",
-        "options": ["10", "30", "1", "20"],
-        "answer": 4
-    },
-    {
-        "id": 5,
-        "topic": "C++",
-        "difficulty": "Лёгкий",
-        "question": "Сколько раз выполнится вывод?\nfor (int i = 0; i < 3; i++) {\n    std::cout << i;\n}",
-        "options": ["2 раза", "3 раза", "4 раза", "1 раз"],
-        "answer": 2
-    },
-    {
-        "id": 1,
-        "topic": "C++",
-        "difficulty": "Средний",
-        "question": "Что выведет код?\nint a = 7;\nint b = 2;\nstd::cout << a / b;",
-        "options": ["3.5", "4", "3", "Возникнет ошибка компиляции"],
-        "answer": 3
-    },
-    {
-        "id": 2,
-        "topic": "C++",
-        "difficulty": "Средний",
-        "question": "Что выведет код?\nint x = 5;\nint& ref = x;\nref = 12;\nstd::cout << x;",
-        "options": ["12", "5", "0", "Возникнет ошибка компиляции"],
-        "answer": 1
-    },
-    {
-        "id": 3,
-        "topic": "C++",
-        "difficulty": "Средний",
-        "question": "Какой метод std::vector добавляет элемент в конец?",
-        "options": ["append()", "add()", "put()", "push_back()"],
-        "answer": 4
-    },
-    {
-        "id": 4,
-        "topic": "C++",
-        "difficulty": "Средний",
-        "question": "Что выведет код?\nint total = 0;\nfor (int i = 1; i <= 5; i++) {\n    if (i % 2 == 0) {\n        continue;\n    }\n    total += i;\n}\nstd::cout << total;",
-        "options": ["15", "9", "6", "5"],
-        "answer": 2
-    },
-    {
-        "id": 5,
-        "topic": "C++",
-        "difficulty": "Средний",
-        "question": "Что означает перегрузка функций в C++?",
-        "options": [
-            "Вызов функции внутри самой себя",
-            "Функции с одинаковым именем, отличающиеся только возвращаемым типом",
-            "Функции с одинаковым именем, но разными списками параметров",
-            "Вызов функции несколько раз в цикле"
-        ],
-        "answer": 3
-    },
-    {
-        "id": 1,
-        "topic": "C++",
-        "difficulty": "Сложный",
-        "question": "Что выведет программа?\n#include <iostream>\nvoid change(int* p) {\n    *p = 9;\n    p = nullptr;\n}\nint main() {\n    int x = 1;\n    int* ptr = &x;\n    change(ptr);\n    std::cout << x << \" \" << (ptr == nullptr);\n}",
-        "options": ["9 1", "9 0", "1 0", "Возникнет ошибка компиляции"],
-        "answer": 2
-    },
-    {
-        "id": 2,
-        "topic": "C++",
-        "difficulty": "Сложный",
-        "question": "Что выведет программа?\n#include <iostream>\nclass Base {\npublic:\n    virtual int value() const { return 1; }\n};\nclass Derived : public Base {\npublic:\n    int value() const override { return 2; }\n};\nint main() {\n    Derived d;\n    Base b = d;\n    Base& ref = d;\n    std::cout << b.value() << \" \" << ref.value();\n}",
-        "options": ["2 2", "1 1", "1 2", "2 1"],
-        "answer": 3
-    },
-    {
-        "id": 3,
-        "topic": "C++",
-        "difficulty": "Сложный",
-        "question": "В чём основная идея RAII в C++?",
-        "options": [
-            "Связать управление ресурсом со временем жизни объекта: получать ресурс при инициализации и освобождать в деструкторе",
-            "Освобождать все ресурсы только при завершении программы",
-            "Использовать только глобальные переменные",
-            "Заменить все указатели целыми числами"
-        ],
-        "answer": 1
-    },
-    {
-        "id": 4,
-        "topic": "C++",
-        "difficulty": "Сложный",
-        "question": "Что выведет программа?\n#include <iostream>\nint main() {\n    int x = 5;\n    auto by_value = [x]() { return x; };\n    auto by_reference = [&x]() { return x; };\n    x = 10;\n    std::cout << by_value() << \" \" << by_reference();\n}",
-        "options": ["10 10", "5 5", "10 5", "5 10"],
-        "answer": 4
-    },
-    {
-        "id": 5,
-        "topic": "C++",
-        "difficulty": "Сложный",
-        "question": "Что произойдёт при компиляции кода C++11 или новее?\n#include <memory>\nint main() {\n    std::unique_ptr<int> first(new int(5));\n    std::unique_ptr<int> second = first;\n}",
-        "options": [
-            "Создадутся два независимых объекта int",
-            "Возникнет ошибка компиляции: std::unique_ptr нельзя копировать",
-            "Оба указателя автоматически станут nullptr",
-            "Владение автоматически перейдёт к second"
-        ],
-        "answer": 2
+    print("\nВопрос добавлен!")
+def get_questions():
+    questions = []
+    groups = {
+        "Python": {
+            "Лёгкий": [
+                (
+                    "Какой тип данных возвращает input()?",
+                    ["int", "str", "float", "bool"],
+                    2
+                ),
+                (
+                    "Что выведет код?\nprint(2 + 3 * 2)",
+                    ["10", "12", "8", "7"],
+                    3
+                ),
+                (
+                    "Какая коллекция хранит пары ключ — значение?",
+                    ["list", "tuple", "set", "dict"],
+                    4
+                ),
+                (
+                    "Что выведет код?\nnumbers = [10, 20, 30]\nprint(numbers[1])",
+                    ["10", "20", "30", "1"],
+                    2
+                ),
+                (
+                    "Сколько раз выполнится print()?\n"
+                    "for i in range(3):\n"
+                    "    print(i)",
+                    ["3 раза", "2 раза", "4 раза", "1 раз"],
+                    1
+                )
+            ],
+            "Средний": [
+                (
+                    "Что выведет код?\n"
+                    "numbers = [1, 2, 3, 4, 5]\n"
+                    "print(numbers[1:4])",
+                    ["[1, 2, 3, 4]", "[2, 3, 4]", "[2, 3, 4, 5]", "[1, 2, 3]"],
+                    2
+                ),
+                (
+                    "Что произойдёт при обращении к отсутствующему ключу "
+                    "обычного словаря через data[key]?",
+                    ["Вернётся None", "Создастся ключ", "Ошибка KeyError", "Вернётся False"],
+                    3
+                ),
+                (
+                    "Что выведет код?\n"
+                    "def add_item(items):\n"
+                    "    items.append(3)\n"
+                    "numbers = [1, 2]\n"
+                    "add_item(numbers)\n"
+                    "print(numbers)",
+                    ["[1, 2]", "[3]", "None", "[1, 2, 3]"],
+                    4
+                ),
+                (
+                    "Чем return отличается от print()?",
+                    [
+                        "return возвращает значение и завершает вызов функции, "
+                        "print() выводит данные",
+                        "print() завершает функцию",
+                        "Они всегда делают одно и то же",
+                        "return работает только с числами"
+                    ],
+                    1
+                ),
+                (
+                    "Что выведет код?\n"
+                    "total = 0\n"
+                    "for number in range(1, 6):\n"
+                    "    if number % 2 == 0:\n"
+                    "        continue\n"
+                    "    total += number\n"
+                    "print(total)",
+                    ["15", "6", "9", "5"],
+                    3
+                )
+            ],
+            "Сложный": [
+                (
+                    "Что выведет код?\n"
+                    "a = [[1, 2], [3, 4]]\n"
+                    "b = a.copy()\n"
+                    "b[0].append(5)\n"
+                    "print(a[0])",
+                    ["[1, 2]", "[1, 2, 5]", "[3, 4, 5]", "Ошибка"],
+                    2
+                ),
+                (
+                    "Что выведет код?\n"
+                    "def add(value, items=[]):\n"
+                    "    items.append(value)\n"
+                    "    return items\n"
+                    "add(1)\n"
+                    "print(add(2))",
+                    ["[2]", "[1]", "[1, 2]", "[]"],
+                    3
+                ),
+                (
+                    "Почему список нельзя использовать как ключ словаря?",
+                    [
+                        "Список хранит только числа",
+                        "Ключами могут быть только строки",
+                        "У списка нет индексов",
+                        "Список является нехешируемым типом"
+                    ],
+                    4
+                ),
+                (
+                    "Что выведет код?\n"
+                    "def calculate(n):\n"
+                    "    if n <= 1:\n"
+                    "        return 1\n"
+                    "    return n * calculate(n - 2)\n"
+                    "print(calculate(5))",
+                    ["15", "120", "10", "5"],
+                    1
+                ),
+                (
+                    "Что произойдёт?\n"
+                    "x = 10\n"
+                    "def change():\n"
+                    "    x = x + 1\n"
+                    "    return x\n"
+                    "print(change())",
+                    ["Выведется 11", "Выведется 10", "Ошибка UnboundLocalError", "Выведется None"],
+                    3
+                )
+            ]
+        },
+        "Java": {
+            "Лёгкий": [
+                (
+                    "Какой примитивный тип хранит true и false?",
+                    ["int", "String", "boolean", "char"],
+                    3
+                ),
+                (
+                    "Что выведет код?\nSystem.out.println(2 + 3 * 2);",
+                    ["10", "8", "12", "7"],
+                    2
+                ),
+                (
+                    "С какого индекса начинается массив?",
+                    ["0", "1", "-1", "Зависит от длины"],
+                    1
+                ),
+                (
+                    "Что выведет код?\n"
+                    "int[] numbers = {10, 20, 30};\n"
+                    "System.out.println(numbers[2]);",
+                    ["10", "20", "2", "30"],
+                    4
+                ),
+                (
+                    "Сколько раз выполнится println()?\n"
+                    "for (int i = 0; i < 4; i++) {\n"
+                    "    System.out.println(i);\n"
+                    "}",
+                    ["3 раза", "4 раза", "5 раз", "1 раз"],
+                    2
+                )
+            ],
+            "Средний": [
+                (
+                    "Что выведет код?\n"
+                    "int a = 7;\n"
+                    "int b = 2;\n"
+                    "System.out.println(a / b);",
+                    ["3.5", "4", "3", "Ошибка"],
+                    3
+                ),
+                (
+                    "Как сравнить содержимое двух строк, если они не null?",
+                    ["equals()", "Всегда через ==", "Через in", "Сравнить длины"],
+                    1
+                ),
+                (
+                    "Что выведет код?\n"
+                    "int[] a = {1, 2, 3};\n"
+                    "int[] b = a;\n"
+                    "b[0] = 9;\n"
+                    "System.out.println(a[0]);",
+                    ["1", "0", "3", "9"],
+                    4
+                ),
+                (
+                    "Что означает перегрузка методов?",
+                    [
+                        "Повторный вызов метода",
+                        "Одинаковое имя, разные списки параметров",
+                        "Различие только в возвращаемом типе",
+                        "Удаление метода родителя"
+                    ],
+                    2
+                ),
+                (
+                    "Что выведет код?\n"
+                    "int total = 0;\n"
+                    "for (int i = 1; i <= 5; i++) {\n"
+                    "    if (i % 2 == 0) {\n"
+                    "        continue;\n"
+                    "    }\n"
+                    "    total += i;\n"
+                    "}\n"
+                    "System.out.println(total);",
+                    ["15", "6", "9", "5"],
+                    3
+                )
+            ],
+            "Сложный": [
+                (
+                    "Что выведет код?\n"
+                    'String a = new String("Java");\n'
+                    'String b = new String("Java");\n'
+                    "System.out.println(a == b);\n"
+                    "System.out.println(a.equals(b));",
+                    ["true, true", "false, true", "false, false", "true, false"],
+                    2
+                ),
+                (
+                    "Что выведет программа?\n"
+                    "class Main {\n"
+                    "    static void change(int[] values) {\n"
+                    "        values[0] = 9;\n"
+                    "        values = new int[]{7, 8};\n"
+                    "    }\n"
+                    "    public static void main(String[] args) {\n"
+                    "        int[] numbers = {1, 2};\n"
+                    "        change(numbers);\n"
+                    "        System.out.println(numbers[0]);\n"
+                    "    }\n"
+                    "}",
+                    ["1", "7", "9", "Ошибка"],
+                    3
+                ),
+                (
+                    "Что вернёт метод при вызове?\n"
+                    "static int calculate() {\n"
+                    "    try {\n"
+                    "        return 1;\n"
+                    "    } finally {\n"
+                    "        return 2;\n"
+                    "    }\n"
+                    "}",
+                    ["2", "1", "Сначала 1, затем 2", "Ошибка компиляции"],
+                    1
+                ),
+                (
+                    "Что выведет программа?\n"
+                    "class Animal {\n"
+                    '    String sound() { return "Animal"; }\n'
+                    "}\n"
+                    "class Dog extends Animal {\n"
+                    "    @Override\n"
+                    '    String sound() { return "Dog"; }\n'
+                    "}\n"
+                    "class Main {\n"
+                    "    public static void main(String[] args) {\n"
+                    "        Animal animal = new Dog();\n"
+                    "        System.out.println(animal.sound());\n"
+                    "    }\n"
+                    "}",
+                    ["Animal", "Animal Dog", "Ошибка компиляции", "Dog"],
+                    4
+                ),
+                (
+                    "Какое правило связывает equals() и hashCode()?",
+                    [
+                        "Разные объекты всегда имеют разные хеш-коды",
+                        "Равные по equals() объекты имеют одинаковый hashCode()",
+                        "Одинаковый hashCode() всегда означает равенство",
+                        "equals() возвращает int"
+                    ],
+                    2
+                )
+            ]
+        },
+        "C++": {
+            "Лёгкий": [
+                (
+                    "Какой тип хранит true и false?",
+                    ["int", "bool", "char", "double"],
+                    2
+                ),
+                (
+                    "Что выведет код?\nstd::cout << 2 + 3 * 2;",
+                    ["10", "12", "8", "7"],
+                    3
+                ),
+                (
+                    "Какой заголовок нужен для std::cout?",
+                    ["<iostream>", "<string>", "<vector>", "<cmath>"],
+                    1
+                ),
+                (
+                    "Что выведет код?\n"
+                    "int numbers[] = {10, 20, 30};\n"
+                    "std::cout << numbers[1];",
+                    ["10", "30", "1", "20"],
+                    4
+                ),
+                (
+                    "Сколько раз выполнится вывод?\n"
+                    "for (int i = 0; i < 3; i++) {\n"
+                    "    std::cout << i;\n"
+                    "}",
+                    ["2 раза", "3 раза", "4 раза", "1 раз"],
+                    2
+                )
+            ],
+            "Средний": [
+                (
+                    "Что выведет код?\n"
+                    "int a = 7;\n"
+                    "int b = 2;\n"
+                    "std::cout << a / b;",
+                    ["3.5", "4", "3", "Ошибка компиляции"],
+                    3
+                ),
+                (
+                    "Что выведет код?\n"
+                    "int x = 5;\n"
+                    "int& ref = x;\n"
+                    "ref = 12;\n"
+                    "std::cout << x;",
+                    ["12", "5", "0", "Ошибка компиляции"],
+                    1
+                ),
+                (
+                    "Какой метод std::vector добавляет элемент в конец?",
+                    ["append()", "add()", "put()", "push_back()"],
+                    4
+                ),
+                (
+                    "Что выведет код?\n"
+                    "int total = 0;\n"
+                    "for (int i = 1; i <= 5; i++) {\n"
+                    "    if (i % 2 == 0) {\n"
+                    "        continue;\n"
+                    "    }\n"
+                    "    total += i;\n"
+                    "}\n"
+                    "std::cout << total;",
+                    ["15", "9", "6", "5"],
+                    2
+                ),
+                (
+                    "Что означает перегрузка функций?",
+                    [
+                        "Вызов функции внутри себя",
+                        "Различие только в возвращаемом типе",
+                        "Одинаковое имя, разные списки параметров",
+                        "Несколько вызовов функции в цикле"
+                    ],
+                    3
+                )
+            ],
+            "Сложный": [
+                (
+                    "Что выведет программа?\n"
+                    "#include <iostream>\n"
+                    "void change(int* p) {\n"
+                    "    *p = 9;\n"
+                    "    p = nullptr;\n"
+                    "}\n"
+                    "int main() {\n"
+                    "    int x = 1;\n"
+                    "    int* ptr = &x;\n"
+                    "    change(ptr);\n"
+                    '    std::cout << x << " " << (ptr == nullptr);\n'
+                    "}",
+                    ["9 1", "9 0", "1 0", "Ошибка компиляции"],
+                    2
+                ),
+                (
+                    "Что выведет программа?\n"
+                    "#include <iostream>\n"
+                    "class Base {\n"
+                    "public:\n"
+                    "    virtual int value() const { return 1; }\n"
+                    "};\n"
+                    "class Derived : public Base {\n"
+                    "public:\n"
+                    "    int value() const override { return 2; }\n"
+                    "};\n"
+                    "int main() {\n"
+                    "    Derived d;\n"
+                    "    Base b = d;\n"
+                    "    Base& ref = d;\n"
+                    '    std::cout << b.value() << " " << ref.value();\n'
+                    "}",
+                    ["2 2", "1 1", "1 2", "2 1"],
+                    3
+                ),
+                (
+                    "В чём основная идея RAII?",
+                    [
+                        "Связать ресурс со временем жизни объекта "
+                        "и освобождать его в деструкторе",
+                        "Освобождать ресурсы только при завершении программы",
+                        "Использовать только глобальные переменные",
+                        "Заменить указатели числами"
+                    ],
+                    1
+                ),
+                (
+                    "Что выведет программа?\n"
+                    "#include <iostream>\n"
+                    "int main() {\n"
+                    "    int x = 5;\n"
+                    "    auto by_value = [x]() { return x; };\n"
+                    "    auto by_reference = [&x]() { return x; };\n"
+                    "    x = 10;\n"
+                    '    std::cout << by_value() << " " << by_reference();\n'
+                    "}",
+                    ["10 10", "5 5", "10 5", "5 10"],
+                    4
+                ),
+                (
+                    "Что произойдёт в C++11 или новее?\n"
+                    "#include <memory>\n"
+                    "int main() {\n"
+                    "    std::unique_ptr<int> first(new int(5));\n"
+                    "    std::unique_ptr<int> second = first;\n"
+                    "}",
+                    [
+                        "Создадутся два независимых объекта int",
+                        "Ошибка компиляции: unique_ptr нельзя копировать",
+                        "Оба указателя станут nullptr",
+                        "Владение автоматически перейдёт к second"
+                    ],
+                    2
+                )
+            ]
+        }
     }
-]
+    for topic, levels in groups.items():
+        for difficulty, items in levels.items():
+            for number, item in enumerate(items, start=1):
+                text, options, answer = item
+                questions.append({
+                    "id": number,
+                    "topic": topic,
+                    "difficulty": difficulty,
+                    "question": text,
+                    "options": options,
+                    "answer": answer
+                })
+    return questions
+def main():
+    questions = get_questions()
     table_of_result = {}
+    points_by_level = {
+        "Лёгкий": 1,
+        "Средний": 2,
+        "Сложный": 3
+    }
     while True:
-        print("1 - Начать игру\n" \
-        "2 - Посмотреть таблицу результатов\n" \
-        "3 - Добавить вопрос\n" \
-        "4 - Выйти из программы")
-        mode = input("Выберите: ")
-        if mode.isdigit() and len(mode) == 1 and 1 <= int(mode) <= 4 and mode == "1":
-            while True:
-                player = input("Напишите свой никнейм: ").strip()
-                if not player:
-                    print("Никнейм не должен быть пустым")
-                    continue
-                if player not in table_of_result:
+        print("\n1 - Начать игру")
+        print("2 - Посмотреть таблицу результатов")
+        print("3 - Добавить вопрос")
+        print("0 - Выйти")
+        mode = input("Выберите: ").strip()
+        if mode == "1":
+            player = choose_player(table_of_result)
+            topic = choose_topic(questions)
+            if topic is None:
+                continue
+            level = choose_level()
+            has_questions = False
+            for question in questions:
+                if question["topic"] == topic and question["difficulty"] == level:
+                    has_questions = True
                     break
-                while True:
-                    print("Этот никнейм уже используется")
-                    print("1 - Я тот же игрок, хочу сыграть ещё раз")
-                    print("2 - Я другой человек, выберу другой ник")
-                    same_player = input("Выберите вариант (1–2): ").strip()
-                    if same_player in ("1", "2"):
-                        break
-                    print("Введите 1 или 2")
-                if same_player == "1":
-                    break
-            player_choice_topic = choose_topic(questions)
-            player_choice_level = choose_level()
-            correct_answers, incorrect_answers, analysis = play(player_choice_topic, player_choice_level, questions)
-            print("\nПравильные ответы:", len(correct_answers))
-            print("Номера вопросов:", ", ".join(str(n) for n in correct_answers))
-            print("Неправильные ответы:", len(incorrect_answers))
-            print("Номера вопросов:", ", ".join(str(n) for n in incorrect_answers))
-            if analysis:
-                while True:
-                    to_analysis = input("Хотите разбор по ошибкам (да) или (нет)").strip()
-                    if to_analysis.lower() == "да":
-                            for mistake in analysis:
-                                print(f'\nВопрос: {mistake["question"]}')
-                                print(f'Ваш ответ: {mistake["user_answer"]}')
-                                print(f'Правильный ответ: {mistake["correct_answer"]}')
-                            break
-                    elif to_analysis.lower() == "нет":
-                        print("Хорошо, как хотите\n")
-                        break
-                    else:
-                        print("Хмм я не мог понять ваш ответ")
-            if player_choice_level == "Лёгкий":
-                score = len(correct_answers)
-                max_score = 5
-            elif player_choice_level == "Средний":
-                score = len(correct_answers) * 2
-                max_score = 10
-            elif player_choice_level == "Сложный":
-                score = len(correct_answers) * 3
-                max_score = 15
+            if not has_questions:
+                print("Для этой темы и сложности вопросов пока нет")
+                continue
+            correct, incorrect, analysis = play(topic, level, questions)
+            points = points_by_level[level]
+            score = len(correct) * points
+            max_score = (len(correct) + len(incorrect)) * points
+            print("\nИтоги игры:")
+            print("Правильных ответов:", len(correct))
+            print("Неправильных ответов:", len(incorrect))
+            print(f"Баллы: {score}/{max_score}")
+            show_analysis(analysis)
             table_of_result[player] = {
-                "topic": player_choice_topic,
-                "difficulty": player_choice_level,
+                "topic": topic,
+                "difficulty": level,
                 "score": score,
                 "max_score": max_score
             }
-        elif mode.isdigit() and len(mode) == 1 and 1 <= int(mode) <= 4 and mode == "2":
-            if not table_of_result:
-                print("Таблица результатов пока пустая")
-            else:
-                for name, result in table_of_result.items():
-                    print(f'\n{name}:')
-                    print(f'{result["topic"]} — {result["difficulty"]} — {result["score"]}/{result["max_score"]}')
-        elif mode.isdigit() and len(mode) == 1 and 1 <= int(mode) <= 4 and mode == "3":
+        elif mode == "2":
+            show_results(table_of_result)
+        elif mode == "3":
             add_question(questions)
-        elif mode.isdigit() and len(mode) == 1 and 1 <= int(mode) <= 4 and mode == "4":
-            print("До скорой встречи")
+        elif mode == "0":
+            print("До скорой встречи!")
             break
         else:
-            print("Упс что-то не то. Попробуйте заново и будте внимательно")
-main()
+            print("Выберите пункт из меню")
+if __name__ == "__main__":
+    main()
